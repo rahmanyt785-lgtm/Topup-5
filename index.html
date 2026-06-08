@@ -1581,6 +1581,834 @@
         function updateTotalPrice() {
             let baseTotal = currentPricePerMonth * selectedMonths;
             let discount = isDiscountApplied ? appSettings.couponDiscount : 0;
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOHAN X SHOP | FF Service</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        /* DEFAULT LIGHT BLUE THEME (Light Mode) */
+        :root {
+            --bg-color: #F0F4F8;
+            --card-bg: #FFFFFF;
+            --primary-blue: #00C2FF;
+            --primary-dark: #0099CC;
+            --btn-demo: #FF6B6B;
+            --text-glow: #00A3D6;
+            --green-text: #10B981;
+            --modal-bg: #FFFFFF;
+            --btn-continue: #00C2FF;
+            --pg-bg: #F8FAFE;
+            --bkash-pink: #E2136E;
+            --text-dark: #1E293B;
+            --text-gray: #64748B;
+            --border-light: #E2E8F0;
+            --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.08);
+            --star-color: #FFD700;
+            --header-bg: #FFFFFF;
+            --social-bg: #FFFFFF;
+        }
+
+        /* DARK THEME VARIABLES */
+        body.dark-theme {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --primary-blue: #38bdf8;
+            --primary-dark: #0284c7;
+            --btn-demo: #f97316;
+            --text-glow: #38bdf8;
+            --green-text: #4ade80;
+            --modal-bg: #1e293b;
+            --btn-continue: #38bdf8;
+            --pg-bg: #0f172a;
+            --bkash-pink: #ec489a;
+            --text-dark: #f1f5f9;
+            --text-gray: #94a3b8;
+            --border-light: #334155;
+            --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.4);
+            --star-color: #fbbf24;
+            --header-bg: #1e293b;
+            --social-bg: #1e293b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; transition: background-color 0.3s ease, color 0.2s ease; }
+        
+        /* SPLASH SCREEN */
+        #splash-screen { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100vh; 
+            background: linear-gradient(135deg, #E8F4FD 0%, #D4EAFA 50%, #C5E3F7 100%);
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            z-index: 9999; transition: opacity 0.8s ease, visibility 0.8s ease; 
+        }
+        body.dark-theme #splash-screen {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        }
+        .orbit-container { position: relative; width: 280px; height: 280px; display: flex; justify-content: center; align-items: center; }
+        .orbit-ring { position: absolute; width: 240px; height: 240px; border: 2px solid rgba(0, 194, 255, 0.2); border-radius: 50%; animation: rotateOrbit 4s linear infinite; }
+        .orbit-ring:nth-child(2) { width: 200px; height: 200px; animation: rotateOrbitReverse 5s linear infinite; }
+        .orbit-ring:nth-child(3) { width: 160px; height: 160px; animation: rotateOrbit 3s linear infinite; }
+        .orbit-ring::after { content: ''; position: absolute; top: -8px; right: -8px; width: 12px; height: 12px; background-color: var(--primary-blue); border-radius: 50%; box-shadow: 0 0 20px var(--primary-blue); }
+        @keyframes rotateOrbit { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes rotateOrbitReverse { 0% { transform: rotate(360deg); } 100% { transform: rotate(0deg); } }
+        .splash-text { position: absolute; text-align: center; width: 100%; z-index: 10; }
+        .splash-title { font-family: 'Fredoka One', cursive; font-size: 2.4rem; letter-spacing: 2px; text-transform: uppercase; color: var(--primary-dark); text-shadow: 2px 2px 8px rgba(0, 156, 206, 0.2); margin-bottom: 8px; }
+        .splash-title span { color: var(--primary-blue); }
+        .splash-subtitle { font-size: 0.75rem; letter-spacing: 5px; color: var(--text-gray); text-transform: uppercase; font-weight: 500; }
+        .wave-animation { margin-top: 30px; display: flex; gap: 6px; justify-content: center; }
+        .wave-dot { width: 10px; height: 10px; background-color: var(--primary-blue); border-radius: 50%; animation: wave 1.2s ease-in-out infinite; }
+        .wave-dot:nth-child(1) { animation-delay: 0s; }
+        .wave-dot:nth-child(2) { animation-delay: 0.2s; }
+        .wave-dot:nth-child(3) { animation-delay: 0.4s; }
+        .wave-dot:nth-child(4) { animation-delay: 0.6s; }
+        .wave-dot:nth-child(5) { animation-delay: 0.8s; }
+        @keyframes wave { 0%, 100% { transform: translateY(0); opacity: 0.4; } 50% { transform: translateY(-15px); opacity: 1; } }
+        
+        #main-content { opacity: 0; visibility: hidden; transition: opacity 1s ease; max-width: 600px; margin: 0 auto; min-height: 100vh; background-color: var(--bg-color); padding-bottom: 30px; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: var(--header-bg); border-bottom: 1px solid var(--border-light); position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm); transition: background-color 0.2s; }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand img { width: 42px; height: 42px; border-radius: 12px; object-fit: cover; border: 2px solid var(--primary-blue); }
+        .brand h1 { font-family: 'Fredoka One', cursive; font-size: 1.3rem; letter-spacing: 1px; color: var(--primary-dark); }
+        .nav-actions { display: flex; gap: 10px; }
+        .btn-icon { background-color: var(--bg-color); border: 1px solid var(--border-light); color: var(--text-dark); padding: 10px; border-radius: 12px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .btn-icon:hover { background-color: var(--primary-blue); color: white; border-color: var(--primary-blue); }
+        .btn-profile { background-color: var(--primary-blue); color: white; border: none; }
+        .section-divider { text-align: center; margin: 25px 0 15px 0; }
+        .section-divider h2 { font-family: 'Fredoka One', cursive; font-size: 1.2rem; letter-spacing: 2px; color: var(--primary-dark); text-transform: uppercase; display: inline-block; padding: 0 15px; border-bottom: 3px solid var(--primary-blue); padding-bottom: 5px; }
+        .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; padding: 0 15px; }
+        .card { background-color: var(--card-bg); border-radius: 20px; border: 1px solid var(--border-light); overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow-sm); transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s; }
+        .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+        .card-header { display: flex; align-items: center; gap: 8px; padding: 12px; }
+        .os-icon { background-color: var(--bg-color); color: var(--primary-blue); padding: 8px; border-radius: 12px; font-size: 1rem; }
+        .card-title-area h3 { font-size: 0.85rem; font-weight: 700; letter-spacing: 0.3px; color: var(--text-dark); }
+        .verified { color: var(--green-text); font-size: 0.65rem; display: flex; align-items: center; gap: 3px; margin-top: 2px; }
+        .card-banner { width: 100%; height: 110px; background-color: var(--bg-color); }
+        .card-banner img { width: 100%; height: 100%; object-fit: cover; }
+        .card-body { padding: 10px 12px; flex-grow: 1; }
+        .card-description { color: var(--text-gray); font-size: 0.72rem; margin-bottom: 8px; line-height: 1.35; }
+        .tags-container { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+        .tag { background-color: var(--bg-color); color: var(--primary-dark); font-size: 0.65rem; padding: 3px 8px; border-radius: 20px; display: flex; align-items: center; gap: 3px; border: 1px solid var(--border-light); font-weight: 500; }
+        .card-footer { padding: 0 12px 12px 12px; }
+        .price-tag { color: var(--primary-blue); font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
+        .actions-group { display: flex; gap: 8px; }
+        .btn { flex: 1; padding: 9px; border: none; border-radius: 12px; font-weight: 600; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; color: white; transition: all 0.2s; }
+        .btn-danger { background-color: var(--btn-demo); }
+        .btn-danger:hover { background-color: #ff5252; transform: scale(0.98); }
+        .btn-purple { background-color: var(--primary-blue); }
+        .btn-purple:hover { background-color: var(--primary-dark); transform: scale(0.98); }
+        .new-section-container { padding: 20px 15px; margin-top: 10px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .new-box { background-color: var(--card-bg); border-radius: 16px; border: 1px solid var(--border-light); padding: 14px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-sm); }
+        .new-box-icon { font-size: 1.4rem; color: var(--primary-blue); }
+        .new-box-text h4 { font-size: 0.85rem; margin-bottom: 2px; color: var(--text-dark); }
+        .new-box-text p { font-size: 0.7rem; color: var(--text-gray); }
+        
+        /* REVIEW SLIDER SECTION */
+        .review-slider-section { background: var(--card-bg); margin: 20px 15px; border-radius: 24px; overflow: hidden; box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); }
+        .review-header { background: linear-gradient(135deg, #1a2a3a, #0f1a24); padding: 14px 18px; text-align: center; }
+        body.dark-theme .review-header { background: linear-gradient(135deg, #0f172a, #020617); }
+        .review-header h3 { color: var(--primary-blue); font-family: 'Fredoka One', cursive; font-size: 1rem; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .stars { color: var(--star-color); letter-spacing: 3px; font-size: 1rem; }
+        .review-container { padding: 20px; min-height: 180px; display: flex; flex-direction: column; justify-content: center; background: linear-gradient(135deg, #F8FAFE, #F0F4F8); }
+        body.dark-theme .review-container { background: linear-gradient(135deg, #1e293b, #0f172a); }
+        .review-text { font-size: 0.9rem; line-height: 1.5; color: var(--text-dark); text-align: center; font-style: italic; margin-bottom: 15px; }
+        .review-author { text-align: center; font-weight: 600; color: var(--primary-dark); display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .review-author i { color: var(--green-text); }
+        .review-rating { text-align: center; margin-top: 8px; }
+        .review-rating i { color: var(--star-color); font-size: 0.8rem; margin: 0 1px; }
+        @keyframes fadeSlide { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+        .review-item { animation: fadeSlide 0.6s ease; }
+        
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); z-index: 1000; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-box { background-color: var(--modal-bg); width: 90%; max-width: 420px; border-radius: 24px; border: 1px solid var(--border-light); padding: 20px; position: relative; box-shadow: var(--shadow-md); transform: translateY(20px); transition: transform 0.3s ease; }
+        .modal-overlay.active .modal-box { transform: translateY(0); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-light); padding-bottom: 12px; }
+        .modal-title { display: flex; align-items: center; gap: 8px; font-size: 1rem; font-family: 'Fredoka One', cursive; color: var(--primary-dark); letter-spacing: 0.5px; }
+        .modal-title i { color: var(--primary-blue); }
+        .modal-close { background: none; border: none; color: var(--text-gray); font-size: 1.2rem; cursor: pointer; }
+        .step-container { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; position: relative; }
+        .step-container::before { content: ''; position: absolute; top: 15px; left: 25%; width: 50%; height: 2px; background-color: var(--border-light); z-index: 1; }
+        .step-circle { width: 32px; height: 32px; background-color: var(--bg-color); color: var(--text-gray); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.9rem; z-index: 2; transition: all 0.3s ease; border: 1px solid var(--border-light); }
+        .step-circle.active { background-color: var(--green-text); color: white; box-shadow: 0 0 10px var(--green-text); border: none; }
+        .step-circle.current { background-color: var(--primary-blue); color: white; box-shadow: 0 0 10px var(--primary-blue); border: none; }
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; color: var(--text-gray); margin-bottom: 8px; }
+        .form-label span { display: flex; align-items: center; gap: 6px; }
+        .form-label i { color: var(--primary-blue); }
+        .custom-select-trigger { width: 100%; background-color: var(--bg-color); border: 1px solid var(--border-light); color: var(--text-dark); padding: 12px; border-radius: 12px; font-size: 0.85rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2364748B' width='18px' height='18px'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+        .quantity-control { display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-color); border: 1px solid var(--border-light); border-radius: 12px; padding: 8px 12px; }
+        .quantity-label { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-dark); }
+        .quantity-label i { color: var(--primary-blue); }
+        .qty-actions { display: flex; align-items: center; gap: 15px; }
+        .btn-qty { background-color: var(--card-bg); border: 1px solid var(--border-light); color: var(--text-dark); width: 28px; height: 28px; border-radius: 8px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 1rem; }
+        .btn-qty:hover { background-color: var(--primary-blue); color: white; }
+        .qty-value { font-size: 1rem; font-weight: 600; width: 20px; text-align: center; }
+        .btn-continue { width: 100%; background-color: var(--btn-continue); color: #121212; border: none; border-radius: 12px; padding: 12px; font-weight: 600; font-size: 0.95rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 24px; transition: all 0.3s ease; }
+        .btn-continue.glow-active { box-shadow: 0 0 20px var(--primary-blue); animation: pulseGlow 1.2s infinite alternate; }
+        @keyframes pulseGlow { 0% { box-shadow: 0 0 8px var(--primary-blue); transform: scale(1); } 100% { box-shadow: 0 0 22px var(--primary-blue); transform: scale(1.02); } }
+        .order-summary-box { background-color: var(--bg-color); border: 1px solid var(--border-light); border-radius: 16px; padding: 16px; margin-bottom: 20px; }
+        .summary-title { font-size: 0.9rem; font-weight: 600; color: var(--primary-dark); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--border-light); padding-bottom: 6px; }
+        .summary-item { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 8px; color: var(--text-dark); }
+        .summary-label { color: var(--text-gray); }
+        .summary-value { font-weight: 500; }
+        .bkash-method-box { background-color: var(--bg-color); border: 2px solid var(--primary-blue); border-radius: 16px; padding: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-top: 5px; }
+        .bkash-details { display: flex; align-items: center; gap: 12px; }
+        .bkash-icon-wrapper { background-color: #E8F4FD; color: #E2136E; width: 40px; height: 40px; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; }
+        .how-to-link { color: var(--primary-blue); font-size: 0.75rem; text-decoration: none; display: flex; align-items: center; gap: 4px; font-weight: 500; }
+        .coupon-input-group { display: flex; background-color: var(--bg-color); border: 1px solid var(--border-light); border-radius: 12px; overflow: hidden; }
+        .coupon-input-group input { flex: 1; background: none; border: none; padding: 12px; color: var(--text-dark); font-size: 0.85rem; outline: none; }
+        .coupon-input-group input::placeholder { color: var(--text-gray); }
+        .btn-apply-coupon { background-color: var(--primary-blue); color: white; border: none; padding: 0 16px; font-weight: 600; font-size: 0.8rem; cursor: pointer; display: flex; align-items: gap: 5px; }
+        .total-amount-banner { background-color: var(--primary-blue); border-radius: 16px; padding: 14px; display: flex; justify-content: space-between; align-items: center; margin-top: 20px; box-shadow: 0 4px 15px rgba(0, 194, 255, 0.3); }
+        .total-amount-banner span { font-size: 0.9rem; font-weight: 500; display: flex; align-items: center; gap: 6px; color: white; }
+        .total-amount-banner h3 { font-family: 'Fredoka One', cursive; font-size: 1.3rem; letter-spacing: 0.5px; color: white; }
+        .payment-footer-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-back-step { background-color: var(--bg-color); border: 1px solid var(--border-light); color: var(--text-dark); width: 50px; border-radius: 12px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 1rem; }
+        .btn-pay-now { flex: 1; background-color: var(--primary-blue); color: white; border: none; border-radius: 12px; padding: 12px; font-weight: 600; font-size: 0.95rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .gateway-container { background-color: var(--pg-bg); border-radius: 20px; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
+        .encrypted-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; font-weight: 600; color: var(--text-gray); letter-spacing: 1px; padding: 0 5px; }
+        .enc-badge { color: var(--green-text); display: flex; align-items: center; gap: 4px; text-transform: uppercase; }
+        .enc-close, .enc-back { background: var(--bg-color); border: 1px solid var(--border-light); color: var(--text-gray); width: 28px; height: 28px; border-radius: 8px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+        .shop-details-panel { background: linear-gradient(135deg, #E8F4FD 0%, #D4EAFA 100%); border: 1px solid var(--border-light); border-radius: 16px; padding: 16px; display: flex; justify-content: space-between; align-items: center; }
+        body.dark-theme .shop-details-panel { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+        .shop-info-left h2 { font-size: 1.1rem; font-weight: 700; color: var(--primary-dark); letter-spacing: 0.5px; }
+        .shop-info-left p { font-size: 0.65rem; color: var(--text-gray); font-family: monospace; margin-top: 3px; letter-spacing: 0.5px; }
+        .shop-pay-right { text-align: right; }
+        .shop-pay-right span { font-size: 0.6rem; color: var(--text-gray); text-transform: uppercase; font-weight: 600; letter-spacing: 1px; }
+        .shop-pay-right h3 { font-size: 1.3rem; font-weight: 700; color: var(--primary-blue); }
+        .gateway-filter-row { display: flex; gap: 8px; border-bottom: 1px solid var(--border-light); padding-bottom: 12px; margin-top: 5px; }
+        .filter-btn { background-color: var(--card-bg); border: 1px solid var(--border-light); color: var(--text-gray); padding: 8px 14px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .filter-btn.active { background-color: var(--primary-blue); border-color: var(--primary-blue); color: white; }
+        .gateway-list { display: flex; flex-direction: column; gap: 10px; }
+        .gateway-item { background-color: var(--card-bg); border: 1px solid var(--border-light); border-radius: 16px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s; }
+        .gateway-item:hover { border-color: var(--primary-blue); box-shadow: var(--shadow-sm); }
+        .gw-left-meta { display: flex; align-items: center; gap: 14px; }
+        .gw-brand-logo-mock { width: 40px; height: 40px; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.8rem; }
+        .gw-logo-bkash { background-color: #E2136E; color: white; }
+        .gw-logo-nagad { background-color: #F7921E; color: white; }
+        .gw-meta-text h4 { font-size: 0.9rem; font-weight: 600; color: var(--text-dark); }
+        .gw-meta-text span { background-color: var(--bg-color); color: var(--primary-blue); font-size: 0.55rem; font-weight: 600; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; display: inline-block; margin-top: 4px; letter-spacing: 0.5px; }
+        .gw-arrow-icon { color: var(--text-gray); font-size: 0.9rem; }
+        .secure-footer-bar { border-top: 1px solid var(--border-light); padding-top: 14px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .secure-text { font-size: 0.7rem; color: var(--text-gray); display: flex; align-items: center; gap: 6px; }
+        .secure-text i { color: var(--green-text); }
+        .secure-final-price { font-size: 1.2rem; font-weight: 700; color: var(--primary-blue); }
+        .bkash-manual-container { display: flex; flex-direction: column; gap: 15px; background-color: var(--pg-bg); position: relative; border-radius: 20px; }
+        .bkash-white-panel { background-color: var(--card-bg); border-radius: 16px; overflow: hidden; color: var(--text-dark); display: flex; flex-direction: column; box-shadow: var(--shadow-sm); }
+        .bkash-panel-title-bar { background-color: var(--bkash-pink); color: white; text-align: center; padding: 12px; font-size: 0.9rem; font-weight: 600; letter-spacing: 0.5px; }
+        .bkash-input-section { padding: 20px 15px; background-color: var(--bg-color); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .bkash-trx-input-wrapper { position: relative; width: 100%; }
+        .bkash-trx-input-wrapper input { width: 100%; background-color: var(--card-bg); border: 1px solid var(--border-light); border-radius: 10px; padding: 12px 40px 12px 12px; font-size: 0.9rem; outline: none; text-align: center; color: var(--text-dark); }
+        .bkash-input-icon-right { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--bkash-pink); font-size: 1rem; cursor: pointer; }
+        .bkash-instructions-list { padding: 15px; background-color: var(--card-bg); display: flex; flex-direction: column; gap: 12px; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
+        .instruction-item { display: flex; align-items: flex-start; gap: 12px; font-size: 0.8rem; color: var(--text-dark); line-height: 1.4; padding-bottom: 10px; border-bottom: 1px solid var(--border-light); }
+        .instruction-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .ins-num-box { background-color: var(--bg-color); color: var(--text-gray); width: 22px; height: 22px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 0.7rem; font-weight: 600; flex-shrink: 0; }
+        .ins-num-box.hashtag { background-color: #ffe6f0; color: var(--bkash-pink); }
+        .ins-text-content strong { color: var(--text-dark); }
+        .ins-text-content .highlight-yellow { color: #eab308; font-weight: 700; }
+        .btn-inner-copy { background-color: var(--bg-color); border: 1px solid var(--border-light); color: var(--text-gray); font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; cursor: pointer; margin-left: 5px; font-weight: 600; }
+        .btn-bkash-verify { width: 100%; background-color: var(--bkash-pink); color: white; border: none; border-radius: 12px; padding: 14px; font-size: 0.9rem; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .verify-loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.95); z-index: 50; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 20px; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
+        body.dark-theme .verify-loading-overlay { background-color: rgba(0,0,0,0.9); }
+        .verify-loading-overlay.active { opacity: 1; visibility: visible; }
+        .spinner-ring { width: 45px; height: 45px; border: 4px solid rgba(0, 194, 255, 0.2); border-top: 4px solid var(--primary-blue); border-radius: 50%; animation: spinLoader 1s linear infinite; margin-bottom: 12px; }
+        @keyframes spinLoader { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .verify-loading-overlay p { font-size: 0.85rem; color: var(--text-dark); letter-spacing: 0.5px; }
+        .custom-notice-card { background: linear-gradient(135deg, #E8F4FD 0%, #D4EAFA 100%); border: 1px solid var(--primary-blue); border-radius: 20px; padding: 20px; text-align: center; box-shadow: var(--shadow-md); }
+        body.dark-theme .custom-notice-card { background: linear-gradient(135deg, #1e293b, #0f172a); }
+        .notice-icon-bell { background-color: white; color: var(--primary-blue); width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.3rem; margin: 0 auto 12px auto; box-shadow: var(--shadow-sm); }
+        .custom-notice-card p { font-size: 0.9rem; color: var(--text-dark); line-height: 1.6; font-weight: 500; }
+        .btn-notice-dismiss { background-color: var(--primary-blue); color: white; border: none; padding: 8px 20px; border-radius: 10px; margin-top: 15px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+        .help-popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(3px); z-index: 3000; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
+        .help-popup-overlay.active { opacity: 1; visibility: visible; }
+        .help-popup-box { background-color: var(--card-bg); border: 1px solid var(--border-light); width: 85%; max-width: 320px; border-radius: 24px; padding: 20px; text-align: center; box-shadow: var(--shadow-md); }
+        .help-popup-box h4 { font-size: 1rem; margin-bottom: 10px; color: var(--primary-dark); display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .help-num-display { background-color: var(--bg-color); border: 1px solid var(--border-light); padding: 10px; border-radius: 12px; font-size: 1.1rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 15px; letter-spacing: 0.5px; position: relative; }
+        .btn-help-popup-close { background-color: var(--primary-blue); color: white; border: none; padding: 8px 25px; border-radius: 10px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+
+        /* LIVE WEB ADMIN PANEL OVERLAY THEME */
+        .admin-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(6px); z-index: 5000; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
+        .admin-modal-overlay.active { opacity: 1; visibility: visible; }
+        .admin-box { background: var(--card-bg); width: 92%; max-width: 460px; border-radius: 24px; border: 2px solid var(--primary-blue); padding: 22px; box-shadow: var(--shadow-md); max-height: 90vh; overflow-y: auto; }
+        .admin-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--border-light); padding-bottom: 10px; }
+        .admin-title-row h3 { font-family: 'Fredoka One', cursive; color: var(--primary-blue); display: flex; align-items: center; gap: 8px; font-size: 1.1rem; }
+        .admin-form-group { margin-bottom: 14px; }
+        .admin-form-group label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-gray); margin-bottom: 6px; text-transform: uppercase; }
+        .admin-form-group input, .admin-form-group textarea { width: 100%; background: var(--bg-color); border: 1px solid var(--border-light); border-radius: 10px; padding: 10px; font-size: 0.85rem; color: var(--text-dark); outline: none; }
+        .admin-form-group textarea { height: 70px; resize: none; }
+        .btn-admin-save { width: 100%; background: var(--primary-blue); color: white; font-weight: 700; border: none; border-radius: 12px; padding: 12px; cursor: pointer; margin-top: 15px; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    </style>
+</head>
+<body>
+
+    <div id="splash-screen">
+        <div class="orbit-container">
+            <div class="orbit-ring"></div>
+            <div class="orbit-ring"></div>
+            <div class="orbit-ring"></div>
+            <div class="splash-text">
+                <div class="splash-title">SOHAN X<span> SHOP</span></div>
+                <div class="splash-subtitle">PREMIUM SERVICE</div>
+            </div>
+        </div>
+        <div class="wave-animation">
+            <div class="wave-dot"></div>
+            <div class="wave-dot"></div>
+            <div class="wave-dot"></div>
+            <div class="wave-dot"></div>
+            <div class="wave-dot"></div>
+        </div>
+    </div>
+
+    <div id="main-content">
+        <header>
+            <div class="brand">
+                <img src="https://images.unsplash.com/photo-1614680376593-902f74fa0d41?w=150" alt="Logo">
+                <h1>SOHAN X SHOP</h1>
+            </div>
+            <div class="nav-actions">
+                <button class="btn-icon" id="themeToggleBtn"><i class="fas fa-moon"></i></button>
+                <button class="btn-icon btn-profile" id="adminProfileBtn"><i class="fas fa-user-shield"></i></button>
+            </div>
+        </header>
+
+        <div style="padding: 15px 15px 5px 15px;" id="announcementContainer">
+            <div class="custom-notice-card">
+                <div class="notice-icon-bell"><i class="fas fa-bullhorn"></i></div>
+                <p id="uiNoticeMessage">লোড হচ্ছে...</p>
+                <button class="btn-notice-dismiss" onclick="this.parentElement.parentElement.style.display='none'">ঠিক আছে</button>
+            </div>
+        </div>
+
+        <div class="section-divider">
+            <h2>Our Services</h2>
+        </div>
+
+        <div class="products-grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="os-icon"><i class="fab fa-android"></i></div>
+                    <div class="card-title-area">
+                        <h3>VVIP PANEL INJECTOR</h3>
+                        <div class="verified"><i class="fas fa-check-circle"></i> <span>Anti-Ban Verified</span></div>
+                    </div>
+                </div>
+                <div class="card-banner">
+                    <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400" alt="Service banner">
+                </div>
+                <div class="card-body">
+                    <p class="card-description">নিরাপদ এবং ফুল অটো হেডশট প্যানেল। মেইন আইডিতে ১০০% ইউজ করতে পারবেন কোনো রিস্ক ছাড়া।</p>
+                    <div class="tags-container">
+                        <span class="tag"><i class="fas fa-bolt"></i> Fast Access</span>
+                        <span class="tag"><i class="fas fa-shield-alt"></i> Safe</span>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="price-tag"><i class="fas fa-tag"></i> ৳<span id="uiPricePanel">0</span></div>
+                    <div class="actions-group">
+                        <button class="btn btn-danger" onclick="window.open('https://youtube.com', '_blank')"><i class="fab fa-youtube"></i> Demo</button>
+                        <button class="btn btn-purple" id="buyBtn_panel"><i class="fas fa-shopping-cart"></i> Buy</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="os-icon"><i class="fab fa-windows"></i></div>
+                    <div class="card-title-area">
+                        <h3>REGEDIT SPECIAL BYPASS</h3>
+                        <div class="verified"><i class="fas fa-check-circle"></i> <span>Auto Sync Enabled</span></div>
+                    </div>
+                </div>
+                <div class="card-banner">
+                    <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400" alt="Service banner">
+                </div>
+                <div class="card-body">
+                    <p class="card-description">উন্নত মানের রেজিস্ট্রি ফাইল কনফিগারেশন যা আপনার গেমপ্লে এবং এম লককে আরও নিখুঁত করবে।</p>
+                    <div class="tags-container">
+                        <span class="tag"><i class="fas fa-crosshairs"></i> Aim Lock</span>
+                        <span class="tag"><i class="fas fa-infinity"></i> Lifetime</span>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="price-tag"><i class="fas fa-tag"></i> ৳<span id="uiPriceRegedit">0</span></div>
+                    <div class="actions-group">
+                        <button class="btn btn-danger" onclick="window.open('https://youtube.com', '_blank')"><i class="fab fa-youtube"></i> Demo</button>
+                        <button class="btn btn-purple" id="buyBtn_regedit"><i class="fas fa-shopping-cart"></i> Buy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="new-section-container">
+            <div class="new-box">
+                <div class="new-box-icon"><i class="fas fa-headset"></i></div>
+                <div class="new-box-text">
+                    <h4>24/7 Support</h4>
+                    <p>যেকোনো সমস্যায় পাশে আছি</p>
+                </div>
+            </div>
+            <div class="new-box">
+                <div class="new-box-icon"><i class="fas fa-history"></i></div>
+                <div class="new-box-text">
+                    <h4>Instant Delivery</h4>
+                    <p>পেমেন্টের পরেই ফাইল পাবেন</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="review-slider-section">
+            <div class="review-header">
+                <h3><i class="fas fa-comments"></i> CUSTOMER REVIEWS <span class="stars">★★★★★</span></h3>
+            </div>
+            <div class="review-container">
+                <div id="reviewContentArea">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="checkoutModalOverlay">
+        <div class="modal-box" id="modalStep1" style="display: block;">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-cog"></i> Configuration Details</div>
+                <button class="modal-close" id="closeModalBtn1"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="step-container">
+                <div class="step-circle current">1</div>
+                <div class="step-circle">2</div>
+                <div class="step-circle">3</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label"><span><i class="fas fa-layer-group"></i> Selected Product Package</span></label>
+                <div class="custom-select-trigger" id="modalSelectedProductName">VVIP PANEL INJECTOR</div>
+            </div>
+            <div class="form-group" style="margin-top: 20px;">
+                <div class="quantity-control">
+                    <div class="quantity-label"><i class="fas fa-hourglass-half"></i> <span>License Duration (Months)</span></div>
+                    <div class="qty-actions">
+                        <button class="btn-qty" id="qtyMinusBtn"><i class="fas fa-minus"></i></button>
+                        <div class="qty-value" id="qtyValueDisplay">1</div>
+                        <button class="btn-qty" id="qtyPlusBtn"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-continue glow-active" id="step1ContinueBtn">Continue <i class="fas fa-arrow-right"></i></button>
+        </div>
+
+        <div class="modal-box" id="modalStep2" style="display: none;">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-receipt"></i> Payment Overview</div>
+                <button class="modal-close" id="closeModalBtn2"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="step-container">
+                <div class="step-circle active"><i class="fas fa-check"></i></div>
+                <div class="step-circle current">2</div>
+                <div class="step-circle">3</div>
+            </div>
+            <div class="order-summary-box">
+                <div class="summary-title"><i class="fas fa-shopping-basket"></i> Order Summary</div>
+                <div class="summary-item"><span class="summary-label">Item Package:</span><span class="summary-value" id="summaryProductName">Panel</span></div>
+                <div class="summary-item"><span class="summary-label">Duration:</span><span class="summary-value" id="summaryDuration">1 Month</span></div>
+                <div class="summary-item" id="couponDiscountRow" style="display:none; color:var(--green-text);"><span class="summary-label">Coupon Discount:</span><span class="summary-value" id="summaryDiscount">-৳0</span></div>
+            </div>
+            <div class="form-group">
+                <label class="form-label"><span><i class="fas fa-ticket-alt"></i> Apply Promo Coupon Code</span><span style="color:var(--primary-blue); font-size:0.65rem;" id="couponStatusText">Optional</span></label>
+                <div class="coupon-input-group">
+                    <input type="text" placeholder="ENTER COUPON CODE" id="couponInputField">
+                    <button class="btn-apply-coupon" id="applyCouponBtn">Apply</button>
+                </div>
+            </div>
+            <div class="form-group" style="margin-top: 15px;">
+                <label class="form-label"><span><i class="fas fa-credit-card"></i> Recommended Instant Gateway</span></label>
+                <div class="bkash-method-box" id="routingToGatewayBtn">
+                    <div class="bkash-details">
+                        <div class="bkash-icon-wrapper"><i class="fas fa-mobile-alt"></i></div>
+                        <div>
+                            <h4 style="font-size:0.85rem; font-weight:700;">bKash / Nagad Automatic</h4>
+                            <p style="font-size:0.65rem; color:var(--text-gray);">Pay securely instantly via Gateway</p>
+                        </div>
+                    </div>
+                    <div class="how-to-link">Select <i class="fas fa-chevron-right"></i></div>
+                </div>
+            </div>
+            <div class="total-amount-banner">
+                <span>Total Amount Due:</span>
+                <h3 id="summaryFinalTotalAmount">৳0</h3>
+            </div>
+        </div>
+
+        <div class="modal-box" id="modalStep3Gateway" style="display: none; padding: 12px;">
+            <div class="gateway-container">
+                <div class="encrypted-header">
+                    <span class="enc-badge"><i class="fas fa-shield-alt"></i> SECURE GATEWAY</span>
+                    <div style="display:flex; gap:6px;">
+                        <button class="enc-back" id="gatewayBackToStep2Btn"><i class="fas fa-arrow-left"></i></button>
+                        <button class="enc-close" id="closeModalBtn3"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <div class="shop-details-panel">
+                    <div class="shop-info-left">
+                        <h2>SOHAN X SHOP</h2>
+                        <p id="gatewayOrderUUID">ORDER_UUID: LOAD...</p>
+                    </div>
+                    <div class="shop-pay-right">
+                        <span>Amount</span>
+                        <h3 id="gatewayPriceDisplay">৳0</h3>
+                    </div>
+                </div>
+                <div class="gateway-filter-row">
+                    <button class="filter-btn active"><i class="fas fa-wallet"></i> Mobile Banking</button>
+                </div>
+                <div class="gateway-list">
+                    <div class="gateway-item" id="gw_trigger_bkash">
+                        <div class="gw-left-meta">
+                            <div class="gw-brand-logo-mock gw-logo-bkash">bKash</div>
+                            <div class="gw-meta-text">
+                                <h4>বিকাশ ম্যানুয়াল পেমেন্ট</h4>
+                                <span>Manual Active</span>
+                            </div>
+                        </div>
+                        <div class="gw-arrow-icon"><i class="fas fa-chevron-right"></i></div>
+                    </div>
+                    <div class="gateway-item" id="gw_trigger_nagad">
+                        <div class="gw-left-meta">
+                            <div class="gw-brand-logo-mock gw-logo-nagad">Nagad</div>
+                            <div class="gw-meta-text">
+                                <h4>নগদ লাইভ গেটওয়ে</h4>
+                                <span>Maintenance</span>
+                            </div>
+                        </div>
+                        <div class="gw-arrow-icon"><i class="fas fa-chevron-right"></i></div>
+                    </div>
+                </div>
+                <div class="secure-footer-bar">
+                    <span class="secure-text"><i class="fas fa-lock"></i> 128-bit SSL Encrypted Connection</span>
+                    <div class="secure-final-price" id="gatewayFooterPrice">৳0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-box" id="modalStep4BkashManual" style="display: none; padding: 12px;">
+            <div class="bkash-manual-container">
+                <div class="verify-loading-overlay" id="bkashProgressOverlay">
+                    <div class="spinner-ring"></div>
+                    <p>Verifying Transaction TrxID...</p>
+                </div>
+                <div class="encrypted-header" style="margin-bottom: 5px;">
+                    <span style="color:var(--bkash-pink); display:flex; align-items:center; gap:4px; font-weight:700;"><i class="fas fa-shield-alt"></i> BKASH SECURE API</span>
+                    <div style="display:flex; gap:6px;">
+                        <button class="enc-back" id="manualBackToGatewayBtn"><i class="fas fa-arrow-left"></i></button>
+                        <button class="enc-close" id="closeModalBtn4"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <div class="bkash-white-panel">
+                    <div class="bkash-panel-title-bar">বিকাশ মার্চেন্ট অ্যাকাউন্ট পেমেন্ট</div>
+                    <div class="bkash-input-section">
+                        <div style="font-size: 0.72rem; text-align: center; color: var(--text-gray); font-weight:600;">নিচের বিকাশ নম্বরে <span id="innerTargetTotalPrice" style="color:var(--bkash-pink); font-weight:800;">৳0</span> Send Money করুন।</div>
+                        <div class="bkash-trx-input-wrapper">
+                            <input type="text" id="uiTargetBkashNumberDisplay" value="01330721633" disabled style="background-color:var(--bg-color); font-weight:700; color:var(--text-dark); text-align:center;">
+                            <i class="fas fa-copy bkash-input-icon-right" id="innerCopyNumBtn"></i>
+                        </div>
+                        <div class="bkash-trx-input-wrapper" style="margin-top: 5px;">
+                            <input type="text" placeholder="Enter Transaction TrxID" id="bkashTrxInputField" style="border: 1px solid var(--bkash-pink); text-transform: uppercase;">
+                        </div>
+                    </div>
+                    <div class="bkash-instructions-list">
+                        <div class="instruction-item">
+                            <div class="ins-num-box">১</div>
+                            <div class="ins-text-content">আপনার বিকাশ অ্যাপ অথবা *247# ডায়াল করে উপরে দেওয়া নাম্বারে <strong id="insPriceText">৳0</strong> Send Money করুন।</div>
+                        </div>
+                        <div class="instruction-item">
+                            <div class="ins-num-box">২</div>
+                            <div class="ins-text-content">টাকা পাঠানো সফল হলে যে <strong>Transaction ID (TrxID)</strong> টি পাবেন, সেটি উপরের বক্সে লিখুন।</div>
+                        </div>
+                        <div class="instruction-item">
+                            <div class="ins-num-box hashtag">?</div>
+                            <div class="ins-text-content">হেল্প লাগলে পেমেন্ট গেটওয়ে এডমিন সাপোর্ট লাইনে যোগাযোগ করুন। <button class="btn-inner-copy" id="gatewayHelpBtn">HELP LINE</button></div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-bkash-verify" id="verifyTrxIdBtn">Verify Transaction <i class="fas fa-shield-alt"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="help-popup-overlay" id="helpPopupScreen">
+        <div class="help-popup-box">
+            <h4><i class="fab fa-telegram" style="color:#0088cc;"></i> TELEGRAM SUPPORT</h4>
+            <p style="font-size:0.75rem; color:var(--text-gray); margin-bottom:12px; line-height:1.4;">যেকোনো ইনস্ট্যান্ট হেল্প বা পেমেন্ট ভেরিফিকেশন সমস্যার জন্য আমাদের টেলিগ্রাম অফিশিয়াল সাপোর্ট লাইনে যোগাযোগ করুন।</p>
+            <div class="help-num-display" id="helpNumberText">@SOHAN_X_SHOP</div>
+            <button class="btn-help-popup-close" id="copyHelpNumBtn" style="background-color:#0088cc; margin-right:5px;"><i class="fas fa-copy"></i> Copy Username</button>
+            <button class="btn-help-popup-close" id="closeHelpPopupBtn" style="background-color:var(--text-gray);">Close</button>
+        </div>
+    </div>
+
+    <div class="admin-modal-overlay" id="liveAdminPanelOverlay">
+        <div class="admin-box">
+            <div class="admin-title-row">
+                <h3><i class="fas fa-user-gear"></i> SOHAN X ADMIN PANEL</h3>
+                <button class="enc-close" onclick="document.getElementById('liveAdminPanelOverlay').classList.remove('active')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="admin-form-group">
+                <label>বিকাশ নাম্বার (Target bKash Number)</label>
+                <input type="text" id="admBkashNum" placeholder="e.g. 01330721633">
+            </div>
+            <div class="admin-form-group">
+                <label>টেলিগ্রাম সাপোর্ট ইউজারনেম (Telegram Username)</label>
+                <input type="text" id="admHelpLink" placeholder="e.g. @SOHAN_X_SHOP">
+            </div>
+            <div class="admin-form-group">
+                <label>VVIP প্যানেল এর দাম (৳)</label>
+                <input type="number" id="admPanelPrice">
+            </div>
+            <div class="admin-form-group">
+                <label>REGEDIT স্পেশাল বাইপাস এর দাম (৳)</label>
+                <input type="number" id="admRegeditPrice">
+            </div>
+            <div class="admin-form-group">
+                <label>প্রমো কুপন কোড (Promo Coupon Code)</label>
+                <input type="text" id="admCouponCode">
+            </div>
+            <div class="admin-form-group">
+                <label>কুপন ডিসকাউন্ট এর পরিমাণ (৳)</label>
+                <input type="number" id="admCouponDiscount">
+            </div>
+            <div class="admin-form-group">
+                <label>অ্যানাউন্সমেন্ট / নোটিশ মেসেজ (Notice Message)</label>
+                <textarea id="admNoticeMsg" placeholder="ইউজারদের দেখানোর নোটিশ লিখুন..."></textarea>
+            </div>
+            <button class="btn-admin-save" id="saveAdminConfigBtn"><i class="fas fa-cloud-upload-alt"></i> Save & Dynamic Push</button>
+        </div>
+    </div>
+
+    <script>
+        // Realtime Firebase Integration Configuration (User SDK Update)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJ9sTppAgyUc3h57Ur0UXDzrLZJlydhfo",
+            authDomain: "top-up-ebe72.firebaseapp.com",
+            databaseURL: "https://top-up-ebe72-default-rtdb.firebaseio.com",
+            projectId: "top-up-ebe72",
+            storageBucket: "top-up-ebe72.firebasestorage.app",
+            messagingSenderId: "574426357226",
+            appId: "1:574426357226:web:abd51907663703c2ada693",
+            measurementId: "G-0GVQWSKCY7"
+        };
+
+        // Firebase v8 Initialization Structure
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const database = firebase.database();
+
+        // Application Synchronized Runtime States
+        let appSettings = {
+            panelPrice: 150,
+            regeditPrice: 150,
+            bkashNumber: "01330721633",
+            helpNumber: "@SOHAN_X_SHOP",
+            couponCode: "SOHAN50",
+            couponDiscount: 50,
+            noticeMessage: "SOHAN X SHOP-এ আপনাকে স্বাগতম! আমাদের সকল ফাইল ১০০% সেফ এবং এন্টি-ব্যান।"
+        };
+
+        let currentProduct = "Panel";
+        let currentPricePerMonth = 150;
+        let selectedMonths = 1;
+        let isDiscountApplied = false;
+
+        // Dynamic Database Synchronization Block
+        function syncDatabaseWithUI() {
+            database.ref("settings").on("value", (snapshot) => {
+                if(snapshot.exists()) {
+                    const data = snapshot.val();
+                    if(data.panelPrice) appSettings.panelPrice = Number(data.panelPrice);
+                    if(data.regeditPrice) appSettings.regeditPrice = Number(data.regeditPrice);
+                    if(data.bkashNumber) appSettings.bkashNumber = data.bkashNumber;
+                    if(data.helpNumber) appSettings.helpNumber = data.helpNumber;
+                    if(data.couponCode) appSettings.couponCode = data.couponCode;
+                    if(data.couponDiscount) appSettings.couponDiscount = Number(data.couponDiscount);
+                    if(data.noticeMessage) appSettings.noticeMessage = data.noticeMessage;
+                }
+                applySynchronizedData();
+            }, (error) => {
+                console.log("Firebase Read Encrypted/Denied. Using Default Configurations.");
+                applySynchronizedData();
+            });
+        }
+
+        function applySynchronizedData() {
+            document.getElementById('uiPricePanel').innerText = appSettings.panelPrice;
+            document.getElementById('uiPriceRegedit').innerText = appSettings.regeditPrice;
+            document.getElementById('uiNoticeMessage').innerText = appSettings.noticeMessage;
+            document.getElementById('helpNumberText').innerText = appSettings.helpNumber;
+            document.getElementById('uiTargetBkashNumberDisplay').value = appSettings.bkashNumber;
+            
+            // Push values into internal Admin Input Boxes
+            document.getElementById('admBkashNum').value = appSettings.bkashNumber;
+            document.getElementById('admHelpLink').value = appSettings.helpNumber;
+            document.getElementById('admPanelPrice').value = appSettings.panelPrice;
+            document.getElementById('admRegeditPrice').value = appSettings.regeditPrice;
+            document.getElementById('admCouponCode').value = appSettings.couponCode;
+            document.getElementById('admCouponDiscount').value = appSettings.couponDiscount;
+            document.getElementById('admNoticeMsg').value = appSettings.noticeMessage;
+            
+            updateTotalPrice();
+        }
+
+        // Secret Keyboard Admin Trigger Sequence Logic
+        let inputSequence = "";
+        window.addEventListener('keydown', (e) => {
+            inputSequence += e.key;
+            if(inputSequence.length > 20) inputSequence = inputSequence.substring(inputSequence.length - 8);
+            if(inputSequence.includes("admin123")) {
+                inputSequence = "";
+                document.getElementById('liveAdminPanelOverlay').classList.add('active');
+            }
+        });
+
+        // Push Configuration Changes from Admin UI directly to Firebase Realtime Database node
+        document.getElementById('saveAdminConfigBtn').addEventListener('click', () => {
+            const updatePayload = {
+                bkashNumber: document.getElementById('admBkashNum').value.trim(),
+                helpNumber: document.getElementById('admHelpLink').value.trim(),
+                panelPrice: Number(document.getElementById('admPanelPrice').value),
+                regeditPrice: Number(document.getElementById('admRegeditPrice').value),
+                couponCode: document.getElementById('admCouponCode').value.trim(),
+                couponDiscount: Number(document.getElementById('admCouponDiscount').value),
+                noticeMessage: document.getElementById('admNoticeMsg').value.trim()
+            };
+
+            database.ref("settings").set(updatePayload).then(() => {
+                alert("✅ এডমিন প্যানেলের সকল ডাটা সফলভাবে Firebase-এ লাইভ আপডেট ও সেভ করা হয়েছে!");
+                document.getElementById('liveAdminPanelOverlay').classList.remove('active');
+            }).catch((err) => {
+                alert("❌ ডেটাবেস সেভ প্রসেস ফেইল্ড: " + err.message);
+            });
+        });
+
+        // Domestic Client Reviews Runtime Mock
+        const customerReviews = [
+            { text: "প্যানেলটা পুরাই আগুন ভাই! মেইন আইডিতে গেমপ্লে করছি ৩ দিন ধরে কোনো সমস্যা নাই।", author: "Mamba FF", stars: 5 },
+            { text: "ইনস্ট্যান্ট ডেলিভারি পাইলাম। রেজিস্ট্রি ফাইল সেটআপ করার পর হেডশট রেট অনেক বেড়ে গেছে।", author: "Shohel YT", stars: 5 },
+            { text: "ধন্যবাদ সোহান ভাই চমৎকার সাপোর্টের জন্য। পেমেন্ট করার ২ মিনিটের মধ্যে ফাইল পেয়েছি।", author: "Tanvir Gaming", stars: 5 }
+        ];
+        let currentReviewIndex = 0;
+
+        function updateReview() {
+            const area = document.getElementById('reviewContentArea');
+            if(!area) return;
+            const rev = customerReviews[currentReviewIndex];
+            let starHTML = '';
+            for(let i=0; i<rev.stars; i++) starHTML += '<i class="fas fa-star"></i>';
+            
+            area.innerHTML = `
+                <div class="review-item">
+                    <p class="review-text">"${rev.text}"</p>
+                    <div class="review-author"><i class="fas fa-check-circle"></i> ${rev.author}</div>
+                    <div class="review-rating">${starHTML}</div>
+                </div>
+            `;
+            currentReviewIndex = (currentReviewIndex + 1) % customerReviews.length;
+        }
+
+        setInterval(updateReview, 4000);
+
+        // Core UI DOM Nodes Reference Map
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const overlay = document.getElementById('checkoutModalOverlay');
+        const modalStep1 = document.getElementById('modalStep1');
+        const modalStep2 = document.getElementById('modalStep2');
+        const modalStep3Gateway = document.getElementById('modalStep3Gateway');
+        const modalStep4BkashManual = document.getElementById('modalStep4BkashManual');
+        
+        const buyBtn_panel = document.getElementById('buyBtn_panel');
+        const buyBtn_regedit = document.getElementById('buyBtn_regedit');
+        const qtyMinusBtn = document.getElementById('qtyMinusBtn');
+        const qtyPlusBtn = document.getElementById('qtyPlusBtn');
+        const qtyValueDisplay = document.getElementById('qtyValueDisplay');
+        
+        const step1ContinueBtn = document.getElementById('step1ContinueBtn');
+        const routingToGatewayBtn = document.getElementById('routingToGatewayBtn');
+        const gatewayBackToStep2Btn = document.getElementById('gatewayBackToStep2Btn');
+        const manualBackToGatewayBtn = document.getElementById('manualBackToGatewayBtn');
+        const gw_trigger_bkash = document.getElementById('gw_trigger_bkash');
+        const verifyTrxIdBtn = document.getElementById('verifyTrxIdBtn');
+        
+        const applyCouponBtn = document.getElementById('applyCouponBtn');
+        const couponInputField = document.getElementById('couponInputField');
+        const couponStatusText = document.getElementById('couponStatusText');
+        const couponDiscountRow = document.getElementById('couponDiscountRow');
+        
+        const adminProfileBtn = document.getElementById('adminProfileBtn');
+        const helpPopupScreen = document.getElementById('helpPopupScreen');
+        const closeHelpPopupBtn = document.getElementById('closeHelpPopupBtn');
+        const gatewayHelpBtn = document.getElementById('gatewayHelpBtn');
+        const copyHelpNumBtn = document.getElementById('copyHelpNumBtn');
+        const innerCopyNumBtn = document.getElementById('innerCopyNumBtn');
+
+        // Dark Theme Switch Logic
+        themeToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            const icon = themeToggleBtn.querySelector('i');
+            if(document.body.classList.contains('dark-theme')) {
+                icon.className = 'fas fa-sun';
+            } else {
+                icon.className = 'fas fa-moon';
+            }
+        });
+
+        // Trigger Transaction Operations
+        if(buyBtn_panel) buyBtn_panel.addEventListener('click', () => openCheckout("Panel", appSettings.panelPrice));
+        if(buyBtn_regedit) buyBtn_regedit.addEventListener('click', () => openCheckout("Regedit", appSettings.regeditPrice));
+
+        function openCheckout(product, price) {
+            currentProduct = product;
+            currentPricePerMonth = price;
+            selectedMonths = 1;
+            isDiscountApplied = false;
+            if(couponInputField) couponInputField.value = '';
+            if(couponStatusText) { couponStatusText.innerText = "Optional"; couponStatusText.style.color="var(--text-gray)"; }
+            if(couponDiscountRow) couponDiscountRow.style.display = 'none';
+            if(qtyValueDisplay) qtyValueDisplay.innerText = selectedMonths;
+            
+            document.getElementById('modalSelectedProductName').innerText = product === "Panel" ? "VVIP PANEL INJECTOR" : "REGEDIT SPECIAL BYPASS";
+            updateTotalPrice();
+            
+            if(overlay) overlay.classList.add('active');
+            routeToModalStep(1);
+        }
+
+        function routeToModalStep(step) {
+            modalStep1.style.display = step === 1 ? 'block' : 'none';
+            modalStep2.style.display = step === 2 ? 'block' : 'none';
+            modalStep3Gateway.style.display = step === 3 ? 'block' : 'none';
+            modalStep4BkashManual.style.display = step === 4 ? 'block' : 'none';
+        }
+
+        // Close Event Bindings
+        ['closeModalBtn1', 'closeModalBtn2', 'closeModalBtn3', 'closeModalBtn4'].forEach(id => {
+            const btn = document.getElementById(id);
+            if(btn) btn.addEventListener('click', () => { if(overlay) overlay.classList.remove('active'); });
+        });
+
+        // Step 1 Quantity Controls
+        if(qtyMinusBtn) qtyMinusBtn.addEventListener('click', () => { if(selectedMonths > 1) { selectedMonths--; qtyValueDisplay.innerText = selectedMonths; updateTotalPrice(); } });
+        if(qtyPlusBtn) qtyPlusBtn.addEventListener('click', () => { if(selectedMonths < 12) { selectedMonths++; qtyValueDisplay.innerText = selectedMonths; updateTotalPrice(); } });
+
+        // Calculation Engine
+        function updateTotalPrice() {
+            let baseTotal = currentPricePerMonth * selectedMonths;
+            let discount = isDiscountApplied ? appSettings.couponDiscount : 0;
             let finalTotal = baseTotal - discount;
             if(finalTotal < 0) finalTotal = 0;
 
@@ -1685,4 +2513,4 @@
         });
     </script>
 </body>
-</html>
+            </html>
